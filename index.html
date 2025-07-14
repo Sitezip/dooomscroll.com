@@ -74,22 +74,41 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+  #leaderboard {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    font-family: 'Arial Black', sans-serif;
+    font-size: 18px;
+    color: inherit;
+    background: rgba(255,255,255,0.1);
+    padding: 10px 15px;
+    border: 2px solid currentColor;
+    border-radius: 10px;
+    text-align: right;
+    z-index: 999;
+  }
+
   </style>
 </head>
 <body>
+
+  <div id="leaderboard">
+    <div>Your Doom: <span id="user-score">0</span></div>
+    <div>High Doom: <span id="high-score">Loading...</span></div>
+  </div>
 
   <div id="doom-container"></div>
   <div id="continue-wrapper">
     <button id="continue-button">Continue Doomscrolling</button>
   </div>
-
   <script>
     const container = document.getElementById('doom-container');
     const continueButton = document.getElementById('continue-button');
-    let doomCount = 0;
-    let isPaused = false;
+    let doomCount  = 0;
+    let isPaused   = false;
     let isInverted = false;
-    const CHECKPOINT_INTERVAL = 1000; // 1_000_000 Change to 100 or so for easier testing
+    const CHECKPOINT_INTERVAL = 1_000_000;
 
     // Generate doom lines
     function generateDoomLines(batch = 100) {
@@ -97,6 +116,17 @@
 
       for (let i = 0; i < batch; i++) {
         doomCount++;
+        document.getElementById('user-score').textContent = doomCount.toLocaleString();
+
+        // Check if user has reached a high score
+        const user = doomCount;
+        const high = parseInt(document.getElementById('high-score').textContent.replace(/,/g, '')) || 0;
+
+        if (high && user > high) {
+          document.getElementById('leaderboard').style.borderColor = 'gold';
+          document.getElementById('leaderboard').style.boxShadow = '0 0 15px gold';
+        }
+
         const line = document.createElement('div');
         line.className = 'doom-line';
         line.textContent = `Doom ${doomCount}`;
@@ -106,6 +136,13 @@
           pauseAndShowButton();
           break;
         }
+      }
+      trimDoomLines();
+    }
+    
+    function trimDoomLines(maxLines = 750) {
+      while (container.children.length > maxLines) {
+        container.removeChild(container.firstChild);
       }
     }
 
@@ -132,14 +169,14 @@
             console.log('API Response:', data); // Debug info
 
             if (data.success === true) {
-            continueButton.style.display = 'none';
-            continueButton.disabled = false;
-            continueButton.textContent = originalText;
-            isPaused = false;
-            toggleColors();
-            generateDoomLines();
+              continueButton.style.display = 'none';
+              continueButton.disabled = false;
+              continueButton.textContent = originalText;
+              isPaused = false;
+              toggleColors();
+              generateDoomLines();
             } else {
-            throw new Error('Verification failed');
+              throw new Error('Verification failed');
             }
         } catch (err) {
             console.error('API Error:', err);
@@ -164,6 +201,18 @@
         }
     }
 
+    async function loadHighScore() {
+      try {
+        const response = await fetch('https://zzzap.io/Utilities/scrubbing?text=1000000000&list=num');
+        const data = await response.json();
+        const highScore = parseInt(data.response.value || 0, 10);
+        document.getElementById('high-score').textContent = highScore.toLocaleString();
+      } catch (err) {
+        console.error('Failed to load high score:', err);
+        document.getElementById('high-score').textContent = 'Error';
+      }
+    }
+
     // Toggle white/black theme
     function toggleColors() {
       isInverted = !isInverted;
@@ -177,36 +226,37 @@
     // Faster infinite scrolling
     window.addEventListener('scroll', () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
-        generateDoomLines(200);
+        generateDoomLines(Math.floor(Math.random() * 151) + 150); // Random batch size between 150 and 300
       }
     });
 
     // Doomscroll acceleration — autoscroll 10px every time user scrolls
-    let scrollThrottle = false;
-    let scrollHeight = 10_000; // Set a large scroll height
+    let scrollThrottle     = false;
+    let autoScrollDistance = 10_000; // Set a large scroll height
 
     window.addEventListener('wheel', (e) => {
         if (!scrollThrottle) {
             scrollThrottle = true;
 
-            // Automatically scroll down by 10px
-            window.scrollBy({ top: scrollHeight, left: 0, behavior: 'smooth' });
+            // Automatically scroll
+            window.scrollBy({ top: autoScrollDistance, left: 0, behavior: 'smooth' });
 
             setTimeout(() => {
                 scrollThrottle = false;
-            }, 20); // Throttle for smoothness
+            }, 16); // Throttle for smoothness
         }
     }, { passive: true });
 
     // Touch scrolling support
     window.addEventListener('touchmove', () => {
-        window.scrollBy({ top: scrollHeight, left: 0, behavior: 'smooth' });
+        window.scrollBy({ top: autoScrollDistance, left: 0, behavior: 'smooth' });
     }, { passive: true });
 
     continueButton.addEventListener('click', handleContinue);
 
     // Start initial doom
-    generateDoomLines(300);
+    generateDoomLines(Math.floor(Math.random() * 151) + 200);
+    loadHighScore();
   </script>
 </body>
 </html>
