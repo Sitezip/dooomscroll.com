@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <head>
   <meta charset="UTF-8" />
-  <title>Doomscroll</title>
+  <title>Dooomscroll</title>
   <style>
     /* Base styling */
     body {
@@ -75,7 +75,7 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  
+
   #leaderboard {
     position: fixed;
     top: 20px;
@@ -89,6 +89,22 @@
     border-radius: 10px;
     text-align: right;
     z-index: 999;
+  }
+
+
+  @media (max-width: 600px) {
+    #leaderboard {
+      position: static;
+      width: 100%;
+      font-size: 16px;
+      border-radius: 0;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      padding: 10px 5px;
+      text-align: center;
+      right: auto;
+      top: auto;
+    }
   }
 
   </style>
