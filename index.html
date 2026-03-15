@@ -153,6 +153,10 @@
       trimDoomLines();
     }
 
+    let targetScore = 0;
+    let animatedScore = 0;
+    let animationRunning = false;
+
     function updateScoreFromScroll() {
       const lines = container.children;
       let scrolledPast = 0;
@@ -165,12 +169,31 @@
         }
       }
 
-      document.getElementById('user-score').textContent = scrolledPast.toLocaleString();
+      if (scrolledPast > targetScore) {
+        targetScore = scrolledPast;
+        if (!animationRunning) {
+          animationRunning = true;
+          animateScore();
+        }
+      }
+    }
 
-      const high = parseInt(document.getElementById('high-score').textContent.replace(/,/g, '')) || 0;
-      if (high && scrolledPast > high) {
-        document.getElementById('leaderboard').style.borderColor = 'gold';
-        document.getElementById('leaderboard').style.boxShadow = '0 0 15px gold';
+    function animateScore() {
+      if (animatedScore < targetScore) {
+        const diff = targetScore - animatedScore;
+        const step = Math.max(1, Math.floor(diff * 0.08));
+        animatedScore = Math.min(targetScore, animatedScore + step);
+        document.getElementById('user-score').textContent = animatedScore.toLocaleString();
+
+        const high = parseInt(document.getElementById('high-score').textContent.replace(/,/g, '')) || 0;
+        if (high && animatedScore > high) {
+          document.getElementById('leaderboard').style.borderColor = 'gold';
+          document.getElementById('leaderboard').style.boxShadow = '0 0 15px gold';
+        }
+
+        requestAnimationFrame(animateScore);
+      } else {
+        animationRunning = false;
       }
     }
 
